@@ -178,8 +178,9 @@ def k_fold(data, labels, lam, k):
 
 def compute_gradient(feature, target, model, lam = 1e-17):
     # Compute the gradient of linear regression objective function with respect to w
-    gradient = ridge_regression(feature, target, lam)
-    gradient = np.gradient(gradient)
+    gradient = np.dot(feature, model)
+    gradient = np.dot(feature.T, gradient)
+    gradient = gradient - np.dot(feature, target)
     return gradient
 
 
@@ -191,12 +192,12 @@ def compute_gradient(feature, target, model, lam = 1e-17):
 
 # Gradient Descent
 def gradient_descent(feature, target, step_size, max_iter, lam = 1e-17):
-    model = ridge_regression(feature, target, lam)
+    model = [feature[0]]
     for i in range(max_iter):
         # Compute gradient
         v = -compute_gradient(feature, target, model, lam)
         # Update the model
-        model = model + step_size * v
+        model.append(model[i] + step_size * v)
     # Compute the error (objective value)
     objective_value = mean_squared_error(target, model)
         
@@ -205,9 +206,9 @@ def gradient_descent(feature, target, step_size, max_iter, lam = 1e-17):
 
 # Stochastic Gradient Descent
 def batch_gradient_descent(feature, target, step_size, max_iter, batch_size, lam = 1e-17):
-    model = ridge_regression(feature, target, lam)
+    model = generate_rnd_data(feature.shape[1], target.shape[1])
     for i in range(max_iter):
-        batch_start = np.random.ranint(0, feature.shape[1] - batch_size)
+        batch_start = np.random.randint(0, feature.shape[1] - batch_size)
         batch_stop = batch_start + batch_size
         # Compute gradient
         v = -compute_gradient(feature[batch_start:batch_stop], target[batch_start, batch_stop], model, lam)
@@ -286,6 +287,9 @@ if __name__ == '__main__':
 
     # Problem 2
     # [] Complete Gradient Descent & Stochastic GD
+    xsq = np.linspace(0, 5, 100)
+    ysq = (xsq-2)**2
+    print(gradient_descent(xsq, ysq, 0.1, 20))
 
     # [] Implement ridge regression with GD & plot objectives at each iteration
 
