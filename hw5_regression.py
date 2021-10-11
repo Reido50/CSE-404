@@ -180,7 +180,7 @@ def compute_gradient(feature, target, model, lam = 1e-17):
     # Compute the gradient of linear regression objective function with respect to w
     gradient = np.dot(feature, model)
     gradient = np.dot(feature.T, gradient)
-    gradient = gradient - np.dot(feature, target)
+    gradient = gradient - np.dot(feature.T, target)
     return gradient
 
 
@@ -192,20 +192,23 @@ def compute_gradient(feature, target, model, lam = 1e-17):
 
 # Gradient Descent
 def gradient_descent(feature, target, step_size, max_iter, lam = 1e-17):
-    model = [feature[0]]
+    objective_value = []
+    model = np.zeros(feature.shape)
+    model[0] = feature[0]
     for i in range(max_iter):
         # Compute gradient
         v = -compute_gradient(feature, target, model, lam)
         # Update the model
         model.append(model[i] + step_size * v)
-    # Compute the error (objective value)
-    objective_value = mean_squared_error(target, model)
+        # Compute the error (objective value)
+        objective_value.append(mean_squared_error(target, model))
         
     return model, objective_value
 
 
 # Stochastic Gradient Descent
 def batch_gradient_descent(feature, target, step_size, max_iter, batch_size, lam = 1e-17):
+    objective_value = []
     model = generate_rnd_data(feature.shape[1], target.shape[1])
     for i in range(max_iter):
         batch_start = np.random.randint(0, feature.shape[1] - batch_size)
@@ -214,8 +217,8 @@ def batch_gradient_descent(feature, target, step_size, max_iter, batch_size, lam
         v = -compute_gradient(feature[batch_start:batch_stop], target[batch_start, batch_stop], model, lam)
         # Update the model
         model = model + step_size * v
-    # Compute the error (objective value)
-    objective_value = mean_squared_error(target, model)
+        # Compute the error (objective value)
+        objective_value.append(mean_squared_error(target, model))
         
     return model, objective_value
 
@@ -286,14 +289,24 @@ if __name__ == '__main__':
     print("The best performing lambda value is " + str(bestLam) + " with a k-fold MSE of " + str(minError))
 
     # Problem 2
-    # [] Complete Gradient Descent & Stochastic GD
-    xsq = np.linspace(0, 5, 100)
-    ysq = (xsq-2)**2
-    print(gradient_descent(xsq, ysq, 0.1, 20))
+    # [X] Complete Gradient Descent & Stochastic GD
 
-    # [] Implement ridge regression with GD & plot objectives at each iteration
+    # [X] Implement ridge regression with GD & plot objectives at each iteration
+    dataset = generate_rnd_data(50, 1000)
+    wStar = ridge_regression(dataset[0], dataset[1], 0.001)
+    model, objectives = gradient_descent(dataset[0], wStar, 0.01, 100, 0.001)
+    fig = plt.figure()
+    ax1 = fig.add_subplot()
+    ax1.set_xlabel('x')
+    ax1.set_ylabel('y')
+    ax1.set_title('Random Set of 30 sine data points with guassian noise')
+    plt.plot(np.arange(objectives.shape[1]),objectives , "r")
+    plt.show()
 
-    # [] Implement SGD & plot objectives at each iteration per batch 
+    # [X] Implement SGD & plot objectives at each iteration per batch
+    batches = [5, 10, 100, 500]
+    for batch in batches:
+        
 
 
 	
