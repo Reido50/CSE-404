@@ -144,9 +144,35 @@ def ridge_regression(feature, target, lam = 1e-17):
 
 
 # K-fold cross validation
-#def k_fold(current_fold, total_fold, total_sample_size):
-#    folds = np.spl
-#    return data_train, data_test, label_train, label_test
+def k_fold(data, labels, lam, k):
+    MSEs = []
+
+    # Split data and labels in k folds
+    data_folds = np.array_split(data, k, 1)
+    label_folds = np.array_split(labels, k, 1)
+    
+    for i in range(k):
+        # Store train and test data in np.arrays
+        train_data = data_folds[i]
+        test_data = []
+        for j in range(k):
+            if i != j:
+                for c in range(data_folds[j].shape[1]):
+                    test_data.append(data_folds[j][0][c])
+        test_data = np.array(test_data)
+        # Store train and test label in np.arrays
+        train_label = label_folds[i]
+        test_label = []
+        for j in range(k):
+            if i != j:
+                for c in range(label_folds[j].shape[1]):
+                    test_label.append(label_folds[j][0][c])
+        test_label = np.array(test_label)
+        # Do ridge regression
+        wStar = ridge_regression(train_data.T, train_label.T, lam)
+        # Find MSE and add to list
+        MSEs.append(mean_squared_error(test_label.T, wStar))
+    return np.average(MSEs)
 
 ########################################################################################
 
@@ -165,29 +191,32 @@ def compute_gradient(feature, target, model, lam = 1e-17):
 
 # Gradient Descent
 def gradient_descent(feature, target, step_size, max_iter, lam = 1e-17):
-   
-    #for i in range(max_iter):
+    model = ridge_regression(feature, target, lam)
+    for i in range(max_iter):
         # Compute gradient
-
+        v = -compute_gradient(feature, target, model, lam)
         # Update the model
-
-        # Compute the error (objective value)
+        model = model + step_size * v
+    # Compute the error (objective value)
+    objective_value = mean_squared_error(target, model)
         
-    return #model, objective value
+    return model, objective_value
 
 
 # Stochastic Gradient Descent
 def batch_gradient_descent(feature, target, step_size, max_iter, batch_size, lam = 1e-17):
-   
-    #for i in range(max_iter):
-        
+    model = ridge_regression(feature, target, lam)
+    for i in range(max_iter):
+        batch_start = np.random.ranint(0, feature.shape[1] - batch_size)
+        batch_stop = batch_start + batch_size
         # Compute gradient
-
+        v = -compute_gradient(feature[batch_start:batch_stop], target[batch_start, batch_stop], model, lam)
         # Update the model
-
-        # Compute the error (objective value)
+        model = model + step_size * v
+    # Compute the error (objective value)
+    objective_value = mean_squared_error(target, model)
         
-    return #model, objective value
+    return model, objective_value
 
 # Plots/Errors
 # def plot_objective_function(objective_value, batch_size=None):
@@ -199,7 +228,6 @@ def batch_gradient_descent(feature, target, step_size, max_iter, batch_size, lam
 if __name__ == '__main__':
     #plt.interactive(False)
     #np.random.seed(491)
-
 
     # Problem 1
     # [X] Complete Least Squares, Ridge Regression, MSE
@@ -246,16 +274,15 @@ if __name__ == '__main__':
     plt.bar(lambdasSTR, testPerformance)
     plt.show()
 
-	# [] Implement k-fold CV & choose best lambda
-    maxLam = -1
-    maxPerformance = -1
+	# [X] Implement k-fold CV & choose best lambda
+    bestLam = -1
+    minError = float("inf")
     for lam in lambdas:
-        foldPerformance = k_fold(X, y, lam, 4)
-        if foldPerformance > maxPerformance:
-            maxLam = lam
-            maxPerformance = foldPerformance
-    print("The best performing lambda value is " + str(maxLam) + " with a k-fold MSE of " + str(maxPerformance))
-
+        foldMSE = k_fold(X, y, lam, 4)
+        if foldMSE < minError:
+            bestLam = lam
+            minError = foldMSE
+    print("The best performing lambda value is " + str(bestLam) + " with a k-fold MSE of " + str(minError))
 
     # Problem 2
     # [] Complete Gradient Descent & Stochastic GD
