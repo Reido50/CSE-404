@@ -178,8 +178,9 @@ def k_fold(data, labels, lam, k):
 
 def compute_gradient(feature, target, model, lam = 1e-17):
     # Compute the gradient of linear regression objective function with respect to w
-    gradient = np.dot(feature, model)
-    gradient = np.dot(feature.T, gradient)
+    # gradient of MSE with respect to t = X^T*X*t-X^T*y
+    gradient = np.dot(feature.T, feature)
+    gradient = gradient * model
     gradient = gradient - np.dot(feature.T, target)
     return gradient
 
@@ -193,13 +194,12 @@ def compute_gradient(feature, target, model, lam = 1e-17):
 # Gradient Descent
 def gradient_descent(feature, target, step_size, max_iter, lam = 1e-17):
     objective_value = []
-    model = np.zeros(feature.shape)
-    model[0] = feature[0]
+    model = np.zeros(max_iter)
     for i in range(max_iter):
         # Compute gradient
-        v = -compute_gradient(feature, target, model, lam)
+        v = -compute_gradient(feature, target, model[i], lam)
         # Update the model
-        model.append(model[i] + step_size * v)
+        model[i + 1] = (model[i] + step_size * v)
         # Compute the error (objective value)
         objective_value.append(mean_squared_error(target, model))
         
@@ -216,7 +216,7 @@ def batch_gradient_descent(feature, target, step_size, max_iter, batch_size, lam
         # Compute gradient
         v = -compute_gradient(feature[batch_start:batch_stop], target[batch_start, batch_stop], model, lam)
         # Update the model
-        model = model + step_size * v
+        model[i+1] = model[i] + step_size * v
         # Compute the error (objective value)
         objective_value.append(mean_squared_error(target, model))
         
@@ -296,17 +296,25 @@ if __name__ == '__main__':
     wStar = ridge_regression(dataset[0], dataset[1], 0.001)
     model, objectives = gradient_descent(dataset[0], wStar, 0.01, 100, 0.001)
     fig = plt.figure()
-    ax1 = fig.add_subplot()
-    ax1.set_xlabel('x')
-    ax1.set_ylabel('y')
-    ax1.set_title('Random Set of 30 sine data points with guassian noise')
+    ax4 = fig.add_subplot()
+    ax4.set_xlabel('x')
+    ax4.set_ylabel('y')
+    ax4.set_title('Random Set of 30 sine data points with guassian noise')
     plt.plot(np.arange(objectives.shape[1]),objectives , "r")
     plt.show()
 
     # [X] Implement SGD & plot objectives at each iteration per batch
     batches = [5, 10, 100, 500]
     for batch in batches:
-        
+        wStar = ridge_regression(dataset[0], dataset[1], 0.001)
+        model, objectives =  batch_gradient_descent(dataset[0], wStar, 0.01, 100, batch)
+        fig = plt.figure()
+        ax5 = fig.add_subplot()
+        ax5.set_xlabel('x')
+        ax5.set_ylabel('y')
+        ax5.set_title('Random Set of 30 sine data points with guassian noise')
+        plt.plot(np.arange(objectives.shape[1]),objectives , "r")
+        plt.show()
 
 
 	
